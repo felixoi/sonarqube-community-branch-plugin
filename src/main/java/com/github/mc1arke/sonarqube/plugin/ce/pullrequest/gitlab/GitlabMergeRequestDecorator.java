@@ -20,14 +20,7 @@ package com.github.mc1arke.sonarqube.plugin.ce.pullrequest.gitlab;
 
 import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.GitlabClient;
 import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.GitlabClientFactory;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.Commit;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.CommitNote;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.Discussion;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.MergeRequest;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.MergeRequestNote;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.Note;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.PipelineStatus;
-import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.User;
+import com.github.mc1arke.sonarqube.plugin.almclient.gitlab.model.*;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.AnalysisDetails;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.DiscussionAwarePullRequestDecorator;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.PostAnalysisIssueVisitor;
@@ -168,11 +161,33 @@ public class GitlabMergeRequestDecorator extends DiscussionAwarePullRequestDecor
     protected void submitSummaryNote(GitlabClient client, MergeRequest mergeRequest, AnalysisDetails analysis) {
         try {
             String summaryCommentBody = analysis.createAnalysisSummary(formatterFactory);
-            Discussion summaryComment = client.addMergeRequestDiscussion(mergeRequest.getSourceProjectId(),
-                    mergeRequest.getIid(),
-                    new MergeRequestNote(summaryCommentBody));
-            if (analysis.getQualityGateStatus() == QualityGate.Status.OK) {
-                client.resolveMergeRequestDiscussion(mergeRequest.getSourceProjectId(), mergeRequest.getIid(), summaryComment.getId());
+            String discussionId;
+
+            Optional<Discussion> discussion = this.getDiscussions(client,mergeRequest)
+                    .stream().filter(d -> !d.getNotes().isEmpty() && d.getNotes().get(0).getBody().contains("# Analysis Details"))
+                    .findFirst();
+            Note note = null;
+
+            if(discussion.isPresent()) {
+                note = discussion.get().getNotes().get(0);
+
+                client.updateMergeRequestDiscussionNote(mergeRequest.getSourceProjectId(),
+                        mergeRequest.getIid(),
+                        discussion.get().getId(),
+                        note.getId(),
+                        new MergeRequestNote(summaryCommentBody));
+
+                discussionId = discussion.get().getId();
+            } else {
+                discussionId = client.addMergeRequestDiscussion(mergeRequest.getSourceProjectId(),
+                        mergeRequest.getIid(),
+                        new MergeRequestNote(summaryCommentBody)).getId();
+            }
+
+            if (analysis.getQualityGateStatus() == QualityGate.Status.OK && (note == null || !note.isResolved())) {
+                client.resolveMergeRequestDiscussion(mergeRequest.getSourceProjectId(), mergeRequest.getIid(), discussionId);
+            } else if (analysis.getQualityGateStatus() != QualityGate.Status.OK && (note != null && note.isResolved())) {
+                client.unresolveMergeRequestDiscussion(mergeRequest.getSourceProjectId(), mergeRequest.getIid(), discussionId);
             }
         } catch (IOException ex) {
             throw new IllegalStateException("Could not submit summary comment to Gitlab", ex);

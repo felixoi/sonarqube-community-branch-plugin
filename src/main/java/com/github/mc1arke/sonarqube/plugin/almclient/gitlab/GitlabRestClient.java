@@ -118,6 +118,19 @@ class GitlabRestClient implements GitlabClient {
     }
 
     @Override
+    public void updateMergeRequestDiscussionNote(long projectId, long mergeRequestIid, String mergeRequestDiscussionId, long mergeRequestNoteId, MergeRequestNote mergeRequestNote) throws IOException {
+        String targetUrl = String.format("%s/projects/%s/merge_requests/%s/discussions/%s/notes/%s", baseGitlabApiUrl, projectId, mergeRequestIid, mergeRequestDiscussionId, mergeRequestNoteId);
+
+        List<NameValuePair> requestContent = new ArrayList<>();
+        requestContent.add(new BasicNameValuePair("body", mergeRequestNote.getContent()));
+
+        HttpPut httpPut = new HttpPut(targetUrl);
+        httpPut.addHeader("Content-type", ContentType.APPLICATION_FORM_URLENCODED.getMimeType());
+        httpPut.setEntity(new UrlEncodedFormEntity(requestContent, StandardCharsets.UTF_8));
+        entity(httpPut, null, httpResponse -> validateResponse(httpResponse, 200, "Discussion note successfully updated"));
+    }
+
+    @Override
     public void addMergeRequestDiscussionNote(long projectId, long mergeRequestIid, String discussionId, String noteContent) throws IOException {
         String targetUrl = String.format("%s/projects/%s/merge_requests/%s/discussions/%s/notes", baseGitlabApiUrl, projectId, mergeRequestIid, discussionId);
 
@@ -130,6 +143,13 @@ class GitlabRestClient implements GitlabClient {
     public void resolveMergeRequestDiscussion(long projectId, long mergeRequestIid, String discussionId) throws IOException {
         String discussionIdUrl = String.format("%s/projects/%s/merge_requests/%s/discussions/%s?resolved=true", baseGitlabApiUrl, projectId, mergeRequestIid, discussionId);
 
+        HttpPut httpPut = new HttpPut(discussionIdUrl);
+        entity(httpPut, null);
+    }
+
+    @Override
+    public void unresolveMergeRequestDiscussion(long projectId, long mergeRequestIid, String discussionId) throws IOException {
+        String discussionIdUrl = String.format("%s/projects/%s/merge_requests/%s/discussions/%s?resolved=false", baseGitlabApiUrl, projectId, mergeRequestIid, discussionId);
         HttpPut httpPut = new HttpPut(discussionIdUrl);
         entity(httpPut, null);
     }

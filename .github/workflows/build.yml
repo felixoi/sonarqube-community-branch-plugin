@@ -2,15 +2,9 @@ name: build
 
 on:
   push:
-    branches:
-      - '**'
-    paths-ignore:
-      - '**.md'
+    branches: [ master, release/* ]
   pull_request:
-    branches:
-      - '**'
-    paths-ignore:
-      - '**.md'
+    branches: [ master ]
 
 jobs:
   prep:
@@ -134,63 +128,3 @@ jobs:
             build/libs/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  sonar:
-    needs: prep
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      -
-        name: Set up Java
-        uses: actions/setup-java@v2.3.1
-        with:
-          java-version: 11
-          java-package: jdk
-          distribution: 'zulu'
-      -
-        name: Cache deps
-        uses: actions/cache@v2
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      -
-        name: Sonar
-        if: ${{ env.SONAR_TOKEN != null }}
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            ./gradlew sonarqube \
-              -Dsonar.pullrequest.provider=github \
-              -Dsonar.pullrequest.github.repository=${{ github.repository }} \
-              -Dsonar.host.url=https://sonarcloud.io \
-              -Dsonar.organization=${SONAR_ORG_KEY} \
-              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-              -Dsonar.pullrequest.key=${{ github.event.number }} \
-              -Dsonar.pullrequest.base=${{ github.base_ref }}
-          elif [ "${{ needs.prep.outputs.release }}" = 'true' ]; then
-            ./gradlew sonarqube \
-              -Dsonar.pullrequest.provider=github \
-              -Dsonar.pullrequest.github.repository=${{ github.repository }} \
-              -Dsonar.host.url=https://sonarcloud.io \
-              -Dsonar.organization=${SONAR_ORG_KEY} \
-              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-              -Dsonar.projectVersion=${{ needs.prep.outputs.version }}
-          else
-            ./gradlew sonarqube \
-              -Dsonar.pullrequest.provider=github \
-              -Dsonar.pullrequest.github.repository=${{ github.repository }} \
-              -Dsonar.host.url=https://sonarcloud.io \
-              -Dsonar.organization=${SONAR_ORG_KEY} \
-              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-              -Dsonar.branch.name=${GITHUB_REF##*/}
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_ORG_KEY: ${{ secrets.SONAR_ORG_KEY }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
