@@ -107,6 +107,16 @@ public final class MarkdownFormatterFactory implements FormatterFactory {
     }
 
     @Override
+    public Formatter<Line> lineFormatter() {
+        return new BaseFormatter<>() {
+            @Override
+            public String format(Line node, FormatterFactory formatterFactory) {
+                return childContents(node, formatterFactory) + System.lineSeparator();
+            }
+        };
+    }
+
+    @Override
     public Formatter<Text> textFormatter() {
         return new BaseFormatter<>() {
             @Override

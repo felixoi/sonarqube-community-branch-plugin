@@ -20,15 +20,7 @@ package com.github.mc1arke.sonarqube.plugin.ce.pullrequest;
 
 
 import com.github.mc1arke.sonarqube.plugin.CommunityBranchPlugin;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.Document;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.FormatterFactory;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.Heading;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.Image;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.Link;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.ListItem;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.Node;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.Paragraph;
-import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.Text;
+import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -246,18 +238,24 @@ public class AnalysisDetails {
         String baseImageUrl = getBaseImageUrl();
 
         Long effort = issue.effortInMinutes();
-        Node effortNode = (null == effort ? new Text("") : new Paragraph(new Text(String.format("**Duration (min):** %s", effort))));
-
         String resolution = issue.resolution();
+        Node effortNode = (null == effort ? new Text("") : (
+                StringUtils.isBlank(resolution) ?
+                new Paragraph(new Text(String.format("**Time to fix:** %s min", effort))) :
+                new Line(new Text(String.format("**Time to fix:** %s min", effort))))
+        );
+
         Node resolutionNode = (StringUtils.isBlank(resolution) ? new Text("") : new Paragraph(new Text(String.format("**Resolution:** %s ", resolution))));
 
         Document document = new Document(
-                new Paragraph(new Text(String.format("**Type:** %s ", issue.type().name())), new Image(issue.type().name(), String.format("%s/checks/IssueType/%s.svg?sanitize=true", baseImageUrl, issue.type().name().toLowerCase()))),
-                new Paragraph(new Text(String.format("**Severity:** %s ", issue.severity())), new Image(issue.severity(), String.format("%s/checks/Severity/%s.svg?sanitize=true", baseImageUrl, issue.severity().toLowerCase()))),
-                new Paragraph(new Text(String.format("**Message:** %s", issue.getMessage()))),
+                new Line(new Text(String.format("**Type:** %s ", issue.type().name())), new Image(issue.type().name(), String.format("%s/checks/IssueType/%s.svg?sanitize=true", baseImageUrl, issue.type().name().toLowerCase()))),
+                new Line(new Text(String.format("**Severity:** %s ", issue.severity())), new Image(issue.severity(), String.format("%s/checks/Severity/%s.svg?sanitize=true", baseImageUrl, issue.severity().toLowerCase()))),
+                new Paragraph(new Text(String.format("**Rule key:** %s",issue.getRuleKey().toString()))),
+                new Line(new Text(String.format("**Message:** %s", issue.getMessage()))),
                 effortNode,
                 resolutionNode,
-                new Paragraph(new Text(String.format("**Project ID:** %s\\**Rule Key:** %s\\**Issue ID:** %s\\", project.getKey(), issue.getRuleKey().toString(), issue.key()))),
+                new Line(new Text(String.format("**Project ID:** %s", project.getKey()))),
+                new Paragraph(new Text(String.format("**Issue ID:** %s", issue.key()))),
                 new Paragraph(new Link(getIssueUrl(issue), new Text("View in SonarQube")))
         );
 

@@ -34,5 +34,7 @@ public interface FormatterFactory {
 
     Formatter<Paragraph> paragraphFormatter();
 
+    Formatter<Line> lineFormatter();
+
     Formatter<Text> textFormatter();
 }
