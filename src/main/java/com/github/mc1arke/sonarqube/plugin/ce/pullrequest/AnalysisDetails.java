@@ -257,9 +257,10 @@ public class AnalysisDetails {
                 new Paragraph(new Text(String.format("**Message:** %s", issue.getMessage()))),
                 effortNode,
                 resolutionNode,
-                new Paragraph(new Text(String.format("**Project ID:** %s **Issue ID:** %s", project.getKey(), issue.key()))),
+                new Paragraph(new Text(String.format("**Project ID:** %s\\**Rule Key:** %s\\**Issue ID:** %s\\", project.getKey(), issue.getRuleKey().toString(), issue.key()))),
                 new Paragraph(new Link(getIssueUrl(issue), new Text("View in SonarQube")))
         );
+
         return formatterFactory.documentFormatter().format(document, formatterFactory);
     }
 
