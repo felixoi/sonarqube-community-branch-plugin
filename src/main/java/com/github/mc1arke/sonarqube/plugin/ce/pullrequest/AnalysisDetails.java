@@ -254,8 +254,6 @@ public class AnalysisDetails {
                 new Line(new Text(String.format("**Message:** %s", issue.getMessage()))),
                 effortNode,
                 resolutionNode,
-                new Line(new Text(String.format("**Project ID:** %s", project.getKey()))),
-                new Paragraph(new Text(String.format("**Issue ID:** %s", issue.key()))),
                 new Paragraph(new Link(getIssueUrl(issue), new Text("View in SonarQube")))
         );
 
