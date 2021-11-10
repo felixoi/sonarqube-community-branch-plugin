@@ -96,12 +96,12 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
                 .filter(issue -> isIssueFromCommitInCurrentRequest(issue.getLeft(), commitIds, scmInfoRepository))
                 .collect(Collectors.toList());
 
+        submitSummaryNote(client, pullRequest, analysis);
         uncommentedIssues.forEach(issue -> submitCommitNoteForIssue(client,
                 pullRequest,
                 issue.getLeft(),
                 issue.getRight(),
                 analysis));
-        submitSummaryNote(client, pullRequest, analysis);
         submitPipelineStatus(client, pullRequest, analysis, server.getPublicRootUrl());
 
         DecorationResult.Builder builder = DecorationResult.builder();
