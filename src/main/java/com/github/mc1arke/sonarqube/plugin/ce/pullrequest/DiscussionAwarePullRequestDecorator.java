@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> implements PullRequestBuildStatusDecorator {
 
-    private static final String RESOLVED_ISSUE_NEEDING_CLOSED_MESSAGE =
+    protected static final String RESOLVED_ISSUE_NEEDING_CLOSED_MESSAGE =
             "This issue no longer exists in SonarQube, but due to other comments being present in this discussion, the discussion is not being being closed automatically. " +
                     "Please manually resolve this discussion once the other comments have been reviewed.";
 
@@ -222,7 +222,7 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
                 .anyMatch(message -> RESOLVED_ISSUE_NEEDING_CLOSED_MESSAGE.equals(getNoteContent(client, message)));
     }
 
-    private void resolveOrPlaceFinalCommentOnDiscussion(C client, U currentUser, D discussion, P pullRequest) {
+    protected void resolveOrPlaceFinalCommentOnDiscussion(C client, U currentUser, D discussion, P pullRequest) {
         if (getNotesForDiscussion(client, discussion).stream()
                 .filter(this::isUserNote)
                 .anyMatch(note -> !isNoteFromCurrentUser(note, currentUser))) {
@@ -230,7 +230,6 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
         } else {
             resolveDiscussion(client, discussion, pullRequest);
         }
-
     }
 
     protected Optional<AnalysisDetails.ProjectIssueIdentifier> parseIssueDetails(C client, N note, AnalysisDetails analysisDetails) {

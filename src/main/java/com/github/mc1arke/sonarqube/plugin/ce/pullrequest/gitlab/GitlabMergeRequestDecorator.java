@@ -233,6 +233,19 @@ public class GitlabMergeRequestDecorator extends DiscussionAwarePullRequestDecor
     }
 
     @Override
+    protected void resolveOrPlaceFinalCommentOnDiscussion(GitlabClient client, User currentUser, Discussion discussion, MergeRequest pullRequest) {
+        List<Note> notes = getNotesForDiscussion(client, discussion);
+
+        if (!notes.isEmpty() && !notes.get(0).getBody().contains("# Analysis Details") && notes.stream()
+                .filter(this::isUserNote)
+                .anyMatch(note -> !isNoteFromCurrentUser(note, currentUser))) {
+            addNoteToDiscussion(client, discussion, pullRequest, DiscussionAwarePullRequestDecorator.RESOLVED_ISSUE_NEEDING_CLOSED_MESSAGE);
+        } else {
+            resolveDiscussion(client, discussion, pullRequest);
+        }
+    }
+
+    @Override
     protected void addNoteToDiscussion(GitlabClient client, Discussion discussion, MergeRequest pullRequest, String note) {
         try {
             client.addMergeRequestDiscussionNote(pullRequest.getSourceProjectId(), pullRequest.getIid(), discussion.getId(), note);
