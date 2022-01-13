@@ -102,7 +102,6 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
                 issue.getLeft(),
                 issue.getRight(),
                 analysis));
-        submitPipelineStatus(client, pullRequest, analysis, server.getPublicRootUrl());
 
         DecorationResult.Builder builder = DecorationResult.builder();
         createFrontEndUrl(pullRequest, analysis).ifPresent(builder::withPullRequestUrl);
